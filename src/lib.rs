@@ -1,7 +1,13 @@
-#[macro_use]
-extern crate clap;
-use clap::App;
-
+//!# dmuc_rust
+//!This is a port of another project of mine called [Discover My Unix Commands](https://github.com/crazcalm/DiscoverMyUnixCommands) and my Go port of it called [dmuc](https://github.com/crazcalm/dmuc)
+//!
+//!## What does this Application do?
+//!This application allows you to list out the applications in the /usr/bin and /usr/local/bin directories. You may also use the "starts with" or "includes" filters to filter your results.
+//!
+//!## Purpose:
+//!I am porting this tool to Rust as a means to become more familiar with Rust. Also, post creating the MVP, I think I can turn this into a tutorial on how to create Rust Terminal Application.
+//!
+//!
 use std::ffi::OsStr;
 use std::path::PathBuf;
 use std::{fs, io, path};
@@ -109,6 +115,7 @@ fn print_to_screen(paths: Vec<PathBuf>, header: &str) {
     }
 }
 
+///Filter enums are used to denote which type of filtering will be used in dmuc
 pub enum Filter<'a> {
     Startswith(&'a str),
     Endswith(&'a str),
@@ -116,7 +123,17 @@ pub enum Filter<'a> {
     None,
 }
 
-fn dmuc(path: &path::Path, filter: &Filter) {
+///dmuc holds the core logic of the application.
+/// # Example
+/// ```
+/// use dmuc::dmuc as dmuc_;
+/// use dmuc::Filter;
+///
+/// let path = "/usr/bin".as_ref();
+///
+/// dmuc_(path, &Filter::None);
+/// ```
+pub fn dmuc(path: &path::Path, filter: &Filter) {
     let mut results = ls_attempt(path).unwrap();
 
     let results = match filter {
@@ -129,83 +146,73 @@ fn dmuc(path: &path::Path, filter: &Filter) {
     print_to_screen(results, path.to_str().unwrap());
 }
 
-fn dmuc_with_list(paths: Vec<&path::Path>, filter: &Filter) {
+///dmuc_with list is small wrapper of dmuc
+/// # Example
+/// ```
+/// use dmuc::Filter;
+/// use dmuc::dmuc_with_list;
+///
+/// let paths = vec!["/usr/bin".as_ref(), "/usr/local/bin".as_ref()];
+///
+/// dmuc_with_list(paths, &Filter::None);
+/// ```
+pub fn dmuc_with_list(paths: Vec<&path::Path>, filter: &Filter) {
     for path in paths {
         dmuc(path, &filter);
     }
 }
 
-fn main() {
-    //Defining my directory variables
-    let usr_bin = "/usr/bin";
-    let local_bin = "/usr/local/bin";
-    let both_dirs = vec![usr_bin.as_ref(), local_bin.as_ref()];
+#[cfg(test)]
+mod tests {
+    use self::super::*;
+    use std::collections::HashMap;
 
+    #[test]
+    fn test_start_with_check(){
+        let mut test_cases = vec![
+            ("name", "na", true),
+            ("name", "me", false),
+            ("name", "no", false),
+            ("name", "", true),
+        ];
 
-    // CMD flags
-    let local = "local";
-    let all = "all";
-    let startswith = "startswith";
-    let includes = "includes";
-    let endswith = "endswith";
+        for case in test_cases {
+            let result = start_with_check(case.0, case.1);
 
-    // The YAML file is found relative to the current file, similar to how modules are found
-    let yaml = load_yaml!("cli.yml");
-    let matches = App::from_yaml(yaml).get_matches();
-
-    // If there are not flags, do the default
-    if matches.args.is_empty() {
-        let path = usr_bin.as_ref();
-
-        dmuc(path, &Filter::None);
-
-    } else if matches.is_present(local) && matches.is_present(startswith) {
-        let path = local_bin.as_ref();
-        let filter = Filter::Startswith(matches.value_of(startswith).unwrap());
-
-        dmuc(path, &filter);
-    } else if matches.is_present(local) && matches.is_present(includes) {
-        let path = local_bin.as_ref();
-        let filter = Filter::Includes(matches.value_of(includes).unwrap());
-
-        dmuc(path, &filter);
-    } else if matches.is_present(local) && matches.is_present(endswith) {
-        let path = local_bin.as_ref();
-        let filter = Filter::Endswith(matches.value_of(endswith).unwrap());
-
-        dmuc(path, &filter);
-
-    } else if matches.is_present(local) {
-        let path = local_bin.as_ref();
-        dmuc(path, &Filter::None);
-
-    } else if matches.is_present(all) && matches.is_present(startswith) {
-        let filter = Filter::Startswith(matches.value_of(startswith).unwrap());
-        dmuc_with_list(both_dirs, &filter);
-
-    } else if matches.is_present(all) && matches.is_present(includes) {
-        let filter = Filter::Includes(matches.value_of(includes).unwrap());
-        dmuc_with_list(both_dirs, &filter);
-
-    } else if matches.is_present(all) && matches.is_present(endswith) {
-        let filter = Filter::Endswith(matches.value_of(endswith).unwrap());
-        dmuc_with_list(both_dirs, &filter);
-
-    } else if matches.is_present(all) {
-        dmuc_with_list(both_dirs, &Filter::None)
-    }else if matches.is_present(includes) {
-        let path = usr_bin.as_ref();
-        let filter = Filter::Includes(matches.value_of(includes).unwrap());
-        dmuc(path, &filter);
-    } else if matches.is_present(startswith) {
-        let path = usr_bin.as_ref();
-        let filter = Filter::Startswith(matches.value_of(startswith).unwrap());
-
-        dmuc(path, &filter);
-    } else if matches.is_present(endswith) {
-        let path = usr_bin.as_ref();
-        let filter = Filter::Endswith(matches.value_of(endswith).unwrap());
-
-        dmuc(path, &filter);
+            assert_eq!(result, case.2);
+        }
     }
+
+    #[test]
+    fn test_includes_check(){
+        let mut test_cases = vec![
+            ("name", "na", true),
+            ("name", "me", true),
+            ("name", "no", false),
+            ("name", "", true),
+        ];
+
+        for case in test_cases {
+            let result = includes_check(case.0, case.1);
+
+            assert_eq!(result, case.2);
+        }
+    }
+
+    #[test]
+    fn test_ends_with_check(){
+        let mut test_cases = vec![
+            ("name", "na", false),
+            ("name", "me", true),
+            ("name", "no", false),
+            ("name", "", true),
+        ];
+
+        for case in test_cases {
+            let result = ends_with_check(case.0, case.1);
+
+            assert_eq!(result, case.2);
+        }
+    }
+
 }
