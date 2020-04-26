@@ -22,7 +22,7 @@ args:
         short: e
         long: endswith
         value_name: String
-        help: Filters output based on it the content ends with the provided string.
+        help: Filters output based on if the content ends with the provided string.
         required: false
         conflicts_with: include
 
