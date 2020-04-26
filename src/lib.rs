@@ -8,7 +8,6 @@
 //!I am porting this tool to Rust as a means to become more familiar with Rust. Also, post creating the MVP, I think I can turn this into a tutorial on how to create Rust Terminal Application.
 //!
 //!
-use std::ffi::OsStr;
 use std::path::PathBuf;
 use std::{fs, io, path};
 
@@ -24,7 +23,7 @@ fn includes_check(item: &str, includes: &str) -> bool {
     item.contains(includes)
 }
 
-fn ends_with_list(mut list: Vec<path::PathBuf>, ends_with: &str) -> Vec<path::PathBuf> {
+fn ends_with_list(list: Vec<path::PathBuf>, ends_with: &str) -> Vec<path::PathBuf> {
     let mut results: Vec<path::PathBuf> = Vec::new();
 
     for item in list {
@@ -40,7 +39,7 @@ fn ends_with_list(mut list: Vec<path::PathBuf>, ends_with: &str) -> Vec<path::Pa
     results
 }
 
-fn includes_list(mut list: Vec<path::PathBuf>, includes: &str) -> Vec<path::PathBuf> {
+fn includes_list(list: Vec<path::PathBuf>, includes: &str) -> Vec<path::PathBuf> {
     let mut results: Vec<path::PathBuf> = Vec::new();
 
     for item in list {
@@ -56,7 +55,7 @@ fn includes_list(mut list: Vec<path::PathBuf>, includes: &str) -> Vec<path::Path
     results
 }
 
-fn start_with_list(mut list: Vec<path::PathBuf>, start_with: &str) -> Vec<path::PathBuf> {
+fn start_with_list(list: Vec<path::PathBuf>, start_with: &str) -> Vec<path::PathBuf> {
     let mut results: Vec<path::PathBuf> = Vec::new();
 
     for item in list {
@@ -98,6 +97,10 @@ fn ls_attempt(path: &path::Path) -> io::Result<Vec<path::PathBuf>> {
 fn print_to_screen(paths: Vec<PathBuf>, header: &str) {
     println!("{}:\n", header);
 
+    if paths.is_empty() {
+        println!("No items found");
+    }
+
     for path in paths {
         match path.file_name() {
             Some(file_name) => match file_name.to_str() {
@@ -134,7 +137,7 @@ pub enum Filter<'a> {
 /// dmuc_(path, &Filter::None);
 /// ```
 pub fn dmuc(path: &path::Path, filter: &Filter) {
-    let mut results = ls_attempt(path).unwrap();
+    let results = ls_attempt(path).unwrap();
 
     let results = match filter {
         Filter::Startswith(string) => start_with_list(results, string),
@@ -159,6 +162,8 @@ pub fn dmuc(path: &path::Path, filter: &Filter) {
 pub fn dmuc_with_list(paths: Vec<&path::Path>, filter: &Filter) {
     for path in paths {
         dmuc(path, &filter);
+
+        println!();
     }
 }
 
@@ -168,7 +173,7 @@ mod tests {
     use std::collections::HashMap;
 
     #[test]
-    fn test_start_with_check(){
+    fn test_start_with_check() {
         let mut test_cases = vec![
             ("name", "na", true),
             ("name", "me", false),
@@ -184,7 +189,7 @@ mod tests {
     }
 
     #[test]
-    fn test_includes_check(){
+    fn test_includes_check() {
         let mut test_cases = vec![
             ("name", "na", true),
             ("name", "me", true),
@@ -200,7 +205,7 @@ mod tests {
     }
 
     #[test]
-    fn test_ends_with_check(){
+    fn test_ends_with_check() {
         let mut test_cases = vec![
             ("name", "na", false),
             ("name", "me", true),
@@ -214,5 +219,4 @@ mod tests {
             assert_eq!(result, case.2);
         }
     }
-
 }

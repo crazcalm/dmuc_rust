@@ -20,17 +20,15 @@
 extern crate clap;
 use clap::App;
 
+use dmuc::dmuc as dmuc_;
 use dmuc::dmuc_with_list;
 use dmuc::Filter;
-use dmuc::dmuc as dmuc_;
-
 
 fn main() {
     //Defining my directory variables
     let usr_bin = "/usr/bin";
     let local_bin = "/usr/local/bin";
     let both_dirs = vec![usr_bin.as_ref(), local_bin.as_ref()];
-
 
     // CMD flags
     let local = "local";
@@ -48,7 +46,6 @@ fn main() {
         let path = usr_bin.as_ref();
 
         dmuc_(path, &Filter::None);
-
     } else if matches.is_present(local) && matches.is_present(startswith) {
         let path = local_bin.as_ref();
         let filter = Filter::Startswith(matches.value_of(startswith).unwrap());
@@ -64,26 +61,21 @@ fn main() {
         let filter = Filter::Endswith(matches.value_of(endswith).unwrap());
 
         dmuc_(path, &filter);
-
     } else if matches.is_present(local) {
         let path = local_bin.as_ref();
         dmuc_(path, &Filter::None);
-
     } else if matches.is_present(all) && matches.is_present(startswith) {
         let filter = Filter::Startswith(matches.value_of(startswith).unwrap());
         dmuc_with_list(both_dirs, &filter);
-
     } else if matches.is_present(all) && matches.is_present(includes) {
         let filter = Filter::Includes(matches.value_of(includes).unwrap());
         dmuc_with_list(both_dirs, &filter);
-
     } else if matches.is_present(all) && matches.is_present(endswith) {
         let filter = Filter::Endswith(matches.value_of(endswith).unwrap());
         dmuc_with_list(both_dirs, &filter);
-
     } else if matches.is_present(all) {
         dmuc_with_list(both_dirs, &Filter::None)
-    }else if matches.is_present(includes) {
+    } else if matches.is_present(includes) {
         let path = usr_bin.as_ref();
         let filter = Filter::Includes(matches.value_of(includes).unwrap());
         dmuc_(path, &filter);
