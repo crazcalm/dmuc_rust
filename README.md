@@ -27,3 +27,6 @@ OPTIONS:
     -i, --inlcude <String>       Filters output based on if the content includes the provided string.
     -s, --startswith <String>    Filters output based on if the content starts with the provided string.
 ```
+
+## Build the dmuc binary:
+run `cargo build --release`
